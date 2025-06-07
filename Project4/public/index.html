@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Hệ thống bình luận</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .comment { border-bottom: 1px solid #ccc; padding: 10px 0; }
+    textarea, input { width: 300px; }
+  </style>
+</head>
+<body>
+  <h1>💬 Viết bình luận</h1>
+
+  <form id="commentForm">
+    <input type="text" id="name" placeholder="Tên của bạn" required /><br><br>
+    <textarea id="message" placeholder="Nội dung bình luận" rows="4" required></textarea><br><br>
+    <button type="submit">Gửi bình luận</button>
+  </form>
+
+  <h2>📃 Danh sách bình luận</h2>
+  <div id="commentList"></div>
+
+  <script>
+    async function loadComments() {
+      const res = await fetch('/api/comments');
+      const comments = await res.json();
+      const list = document.getElementById('commentList');
+      list.innerHTML = '';
+
+      comments.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'comment';
+        div.innerHTML = `
+          <strong>${c.name}</strong> (${new Date(c.createdAt).toLocaleString()}):<br>
+          ${c.message}
+          <br>
+          <button onclick="deleteComment(${c.id})">❌ Xóa</button>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    async function deleteComment(id) {
+      await fetch(`/api/comments/${id}`, {
+        method: 'DELETE'
+      });
+      loadComments();
+    }
+
+    document.getElementById('commentForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('name').value;
+      const message = document.getElementById('message').value;
+
+      await fetch('/api/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, message })
+      });
+
+      document.getElementById('commentForm').reset();
+      loadComments();
+    });
+
+    loadComments();
+  </script>
+</body>
+</html>
